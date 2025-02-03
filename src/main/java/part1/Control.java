@@ -1,19 +1,23 @@
 package part1;
 
 /**
- * pausa y reanudación de los hilos
+ * Clase que gestiona la creación, pausa y reanudación de hilos que buscan números primos.
+ * Extiende la clase Thread para ejecutar su lógica en un hilo separado.
  */
 public class Control extends Thread {
 
-    private final static int NTHREADS = 3;
-    private final static int MAXVALUE = 30000000;
-    private final static int TMILISECONDS = 5000;
-
-    private final int NDATA = MAXVALUE / NTHREADS;
-
-    private PrimeFinderThread pft[];
+    private final static int NTHREADS = 3; // # de hilos que se crean
+    private final static int MAXVALUE = 30000000; //valor max que se busca el # primo
+    private final static int TMILISECONDS = 5000; //intervalo donde pausaran los hilos
+    private final int NDATA = MAXVALUE / NTHREADS; //rango de # que cada hilo procesa
+    private PrimeFinderThread pft[]; //arrglo que busca #s
     private final Object lock = new Object(); //objeto para poder sincronizar
 
+
+    /**
+     * Constructor privado de la clase Control.
+     * Inicializa el arreglo de hilos PrimeFinderThread y asigna a cada hilo un rango de números.
+     */
     private Control() {
         super();
         this.pft = new  PrimeFinderThread[NTHREADS];
@@ -26,10 +30,20 @@ public class Control extends Thread {
         pft[i] = new PrimeFinderThread(i*NDATA, MAXVALUE + 1, lock);
     }
 
+    /**
+     * Método estático que crea y retorna una instancia de la clase Control.
+     *
+     * @return Una nueva instancia de Control.
+     */
     public static Control newControl() {
         return new Control();
     }
 
+
+    /**
+     * Método principal que se ejecuta cuando se inicia el hilo de Control.
+     * Gestiona la creación, pausa y reanudación de los hilos PrimeFinderThread.
+     */
     @Override
     public void run() {
         for(int i = 0;i < NTHREADS;i++ ) {
@@ -45,7 +59,7 @@ public class Control extends Thread {
 
             synchronized (lock) {
                 System.out.println("Pausando todos los hilos...");
-                // Detener todos los hilos
+                // pausa todos los hilos
                 for (PrimeFinderThread thread : pft){
                     thread.pauseThread();
                 }
@@ -65,10 +79,10 @@ public class Control extends Thread {
                         break;
                     }
                 }
-
+                // Si todos los hilos han terminado, finaliza el programa.
                 if (allThreadsFinished) {
                     System.out.println("Todos los hilos han terminado. Finalizando el programa.");
-                    break; // Salir del bucle principal
+                    break;
                 }
 
                 // Esperar que el usuario presione ENTER
