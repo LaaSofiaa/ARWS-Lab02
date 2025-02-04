@@ -18,10 +18,10 @@ import java.io.InputStream;
 public class Board extends JLabel implements Observer {
 
 	private static final long serialVersionUID = 1L;
-	public static final int NR_BARRIERS = 5;
+	public static final int NR_BARRIERS = 10;
 	public static final int NR_JUMP_PADS = 2;
 	public static final int NR_TURBO_BOOSTS = 2;
-	public static final int NR_FOOD = 5;
+	public static final int NR_FOOD = 8;
 	static Cell[] food = new Cell[NR_FOOD];
 	static Cell[] barriers = new Cell[NR_BARRIERS];
 	static Cell[] jump_pads = new Cell[NR_JUMP_PADS];
@@ -183,24 +183,26 @@ public class Board extends JLabel implements Observer {
 
 	private void drawSnake(Graphics g) {
 		for (int i = 0; i != SnakeApp.MAX_THREADS; i++) {
-			for (Cell p : SnakeApp.getApp().snakes[i].getBody()) {
-				if (p.equals(SnakeApp.getApp().snakes[i].getBody().peekFirst())) {
-					g.setColor(new Color(050+(i*10), 205, 150));
-					g.fillRect(p.getX() * GridSize.WIDTH_BOX, p.getY()
-							* GridSize.HEIGH_BOX, GridSize.WIDTH_BOX,
-							GridSize.HEIGH_BOX);
-				} else {
-					if (SnakeApp.getApp().snakes[i].isSelected()) {
-						g.setColor(new Color(032, 178, 170));
-					} else
-						g.setColor(new Color(034, 139, 034));
-					g.fillRect(p.getX() * GridSize.WIDTH_BOX, p.getY()
-							* GridSize.HEIGH_BOX, GridSize.WIDTH_BOX,
-							GridSize.HEIGH_BOX);
+			// Solo dibujamos la serpiente si está viva o si solo queda una
+			if (!SnakeApp.getApp().snakes[i].isSnakeEnd() || SnakeApp.getApp().snakes.length == 1) {
+				for (Cell p : SnakeApp.getApp().snakes[i].getBody()) {
+					if (p.equals(SnakeApp.getApp().snakes[i].getBody().peekFirst())) {
+						g.setColor(new Color(050+(i*10), 205, 150));
+						g.fillRect(p.getX() * GridSize.WIDTH_BOX, p.getY()
+										* GridSize.HEIGH_BOX, GridSize.WIDTH_BOX,
+								GridSize.HEIGH_BOX);
+					} else {
+						if (SnakeApp.getApp().snakes[i].isSelected()) {
+							g.setColor(new Color(032, 178, 170));
+						} else
+							g.setColor(new Color(034, 139, 034));
+						g.fillRect(p.getX() * GridSize.WIDTH_BOX, p.getY()
+										* GridSize.HEIGH_BOX, GridSize.WIDTH_BOX,
+								GridSize.HEIGH_BOX);
+					}
 				}
 			}
 		}
-
 	}
 
 	private void drawGrid(Graphics g) {

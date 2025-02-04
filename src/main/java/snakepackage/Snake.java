@@ -26,54 +26,115 @@ public class Snake extends Observable implements Runnable {
     private boolean isSelected = false;
     private int growing = 0;
     public boolean goal = false;
+    // Instanciar objectos de sincronizacion
+    public final Object lockGui;
+    public final Object lock;
+    public final Object lockSnake;
+    private final Object lockPause;
+    public boolean isPaused = false;
+    private static Snake diedFirst = null;
 
-    public Snake(int idt, Cell head, int direction) {
+    // Constructor de la serpiente con los objetos de sincronizacion
+    public Snake(int idt, Cell head, int direction, Object lockGui, Object lock, Object lockSnake, Object lockPause) {
         this.idt = idt;
         this.direction = direction;
+        this.lockGui = lockGui;
+        this.lock = lock;
+        this.lockSnake = lockSnake;
+        this.lockPause = lockPause;
         generateSnake(head);
 
     }
 
+    // getter de si una serpiente esta muerta
     public boolean isSnakeEnd() {
-        return snakeEnd;
+        synchronized (lock) {
+            return snakeEnd;
+        }
     }
 
+    // setter de si una serpiente esta muerta
+    public void setSnakeEnd(boolean snakeEnd) {
+        synchronized (lock) {
+            this.snakeEnd = snakeEnd;
+        }
+    }
+
+    //Sincronizacionde la creacion de la serpiente
     private void generateSnake(Cell head) {
         start = head;
         //Board.gameboard[head.getX()][head.getY()].reserveCell(jumps, idt);
-        snakeBody.add(head);
+        synchronized (lockSnake){
+            snakeBody.add(head);
+        }
         growing = INIT_SIZE - 1;
     }
 
     @Override
     public void run() {
         while (!snakeEnd) {
-            
+
+            pauseSnakeExecution();
             snakeCalc();
-
-            //NOTIFY CHANGES TO GUI
-            setChanged();
-            notifyObservers();
-
-            try {
-                if (hasTurbo == true) {
-                    Thread.sleep(500 / 3);
-                } else {
-                    Thread.sleep(500);
-                }
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-
+            updateGui();
+            snakeHasTurbo();
         }
         
         fixDirection(head);
-        
-        
+        if(diedFirst == null){
+            diedFirst = this;
+        }
     }
 
+    // getter de la serpiente que murio primero
+    public static String getDiedFirst(){
+        String idDiedFirts;
+        if(diedFirst != null) {
+            idDiedFirts = diedFirst.getIdt() + "";
+        }
+        else {
+            idDiedFirts = "No Snake Died Yet";
+        }
+        return idDiedFirts;
+    }
+
+    private void snakeHasTurbo(){
+        try {
+            if (hasTurbo) {
+                Thread.sleep(500 /3);
+            } else {
+                Thread.sleep(500);
+            }
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
+    //sincroniza pues solo una serpiente puede actualizar la gui a la vez
+    private void updateGui(){
+        synchronized (lockGui){
+            setChanged();
+            notifyObservers();
+        }
+    }
+
+    // sincroniza pues evita que varios hilos accedan a la vez a isPaused
+    private void pauseSnakeExecution(){
+        synchronized (lockPause){
+            while (isPaused){
+                try {
+                    lockPause.wait();
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+    }
+
+    // sincroniza pues solo una serpiente puede calcular su movimiento a la vez
     private void snakeCalc() {
-        head = snakeBody.peekFirst();
+        synchronized (lockSnake){
+            head = snakeBody.peekFirst();
+        }
 
         newCell = head;
 
@@ -85,12 +146,15 @@ public class Snake extends Observable implements Runnable {
         checkIfJumpPad(newCell);
         checkIfTurboBoost(newCell);
         checkIfBarrier(newCell);
-        
-        snakeBody.push(newCell);
+        synchronized (lockSnake){
+            snakeBody.push(newCell);
+        }
 
         if (growing <= 0) {
-            newCell = snakeBody.peekLast();
-            snakeBody.remove(snakeBody.peekLast());
+            synchronized (lockSnake){
+                newCell = snakeBody.peekLast();
+                snakeBody.remove(snakeBody.peekLast());
+            }
             Board.gameboard[newCell.getX()][newCell.getY()].freeCell();
         } else if (growing != 0) {
             growing--;
@@ -103,7 +167,9 @@ public class Snake extends Observable implements Runnable {
             // crash
             System.out.println("[" + idt + "] " + "CRASHED AGAINST BARRIER "
                     + newCell.toString());
-            snakeEnd=true;
+            synchronized (lock){
+                snakeEnd = true;
+            }
         }
     }
 
@@ -128,9 +194,11 @@ public class Snake extends Observable implements Runnable {
     }
 
     private boolean checkIfOwnBody(Cell newCell) {
-        for (Cell c : snakeBody) {
-            if (newCell.getX() == c.getX() && newCell.getY() == c.getY()) {
-                return true;
+        synchronized (lockSnake) {
+            for (Cell c : snakeBody) {
+                if (newCell.getX() == c.getX() && newCell.getY() == c.getY()) {
+                    return true;
+                }
             }
         }
         return false;
@@ -327,8 +395,11 @@ public class Snake extends Observable implements Runnable {
         this.objective = c;
     }*/
 
+    // se da una linkedList del cuerpo de la serpiente
     public LinkedList<Cell> getBody() {
-        return this.snakeBody;
+        synchronized (lockSnake){
+            return new LinkedList<>(snakeBody);
+        }
     }
 
     public boolean isSelected() {
@@ -341,6 +412,19 @@ public class Snake extends Observable implements Runnable {
 
     public int getIdt() {
         return idt;
+    }
+
+    // pausa la serpiente
+    public void pause(){
+        isPaused = true;
+    }
+
+    // reanuda la serpiente
+    public void resume(){
+        synchronized (lockPause){
+            isPaused = false;
+            lockPause.notifyAll();
+        }
     }
 
 }
