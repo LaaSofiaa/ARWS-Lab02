@@ -1,71 +1,94 @@
-### Escuela Colombiana de Ingeniería
-## Arquitecturas de Software - ARSW
+# Laboratorio Hilos y Concurrencia 02
 
-#### Laboratorio - Programación concurrente, condiciones de carrera, esquemas de sincronización, colecciones sincronizadas y concurrentes.
+## Integrantes
+- Sebastián Cardona
+- Laura Gil
+- Zayra Gutiérrez
 
-Ejercicio inividual o en parejas.
+## Docente
+**Javier Toquica Barrera**
 
-### Part I
+## Universidad
+Escuela Colombiana de Ingeniería Julio Garavito
+---
+
+## Contenido
+1. [Introducción](#introducción)
+2. [Desarrollo del Laboratorio](#desarrollo-del-laboratorio)
+   - [Parte I: Control de hilos con wait/notify](#parte-i-control-de-hilos-con-waitnotify)
+   - [Parte II: Optimización de concurrencia en SnakeRace](#parte-ii-optimización-de-concurrencia-en-snakerace)
+3. [Conclusiones](#conclusiones)
+---
+
+## Introducción
+En el ámbito de la programación concurrente, el uso adecuado de hilos y mecanismos de sincronización es crucial para garantizar el correcto funcionamiento de aplicaciones que requieren ejecución simultánea de múltiples procesos. Este laboratorio tiene como objetivo explorar y aplicar conceptos fundamentales de concurrencia en Java, utilizando herramientas como `wait()`, `notify()` y `notifyAll()` para la gestión de hilos.
+
+El laboratorio consta de dos partes:
+1. **PrimeFinder:** Implementación de una pausa y reanudación en la búsqueda de números primos utilizando sincronización de hilos.
+2. **SnakeRace:** Optimización de concurrencia en un juego basado en el clásico "Snake", identificando y solucionando condiciones de carrera.
+
+---
+
+## Desarrollo del Laboratorio
+
+### Parte I: Control de hilos con wait/notify
+
+#### Descripción del Proyecto PrimeFinder
+PrimeFinder es un programa que calcula números primos de manera concurrente, distribuyendo la búsqueda entre `N` hilos independientes. Se realizaron modificaciones para implementar un mecanismo de pausa y reanudación mediante `wait()` y `notifyAll()`.
+
+#### Estructura del Código
+- **PrimeFinderThread:** Hilo encargado de buscar números primos en un rango específico.
+- **Control:** Maneja la ejecución, pausa y reanudación de los hilos.
+- **Main:** Inicia la ejecución del programa.
+
+#### Funcionamiento
+1. **Inicio:** Se crea una instancia de `Control` que configura los hilos `PrimeFinderThread`.
+2. **Ejecución:** Los hilos buscan números primos en su rango asignado.
+3. **Pausa:** Cada `t` milisegundos, los hilos se detienen y muestran los primos encontrados.
+4. **Reanudación:** Al presionar ENTER, los hilos continúan la ejecución.
+![image](https://github.com/user-attachments/assets/42eca98a-6071-4451-bb77-9e2d3eb53a2d)
+
+6. **Finalización:** El programa termina cuando todos los hilos completan su tarea.
+![image](https://github.com/user-attachments/assets/daadc482-d71a-46cc-b799-f9e375b1833b)
 
 
-Parte I – Antes de terminar la clase.
+#### Consideraciones Importantes
+- Uso de `synchronized` para garantizar acceso exclusivo a los recursos compartidos.
+- Implementación de `wait()` y `notifyAll()` para la correcta sincronización de los hilos.
 
-Control de hilos con [wait/notify.](http://howtodoinjava.com/core-java/multi-threading/how-to-work-with-wait-notify-and-notifyall-in-java/)
+---
 
-1.  Descargue el proyecto
-    [*PrimeFinder*](https://github.com/ARSW-ECI/wait-notify-excercise).
-    Este es un programa que calcula números primos entre 0 y M
-    (Control.MAXVALUE), concurrentemente, distribuyendo la búsqueda de
-    los mismos entre n (Control.NTHREADS) hilos independientes.
+### Parte II: Optimización de concurrencia en SnakeRace
 
-2.  Se necesita modificar la aplicación de manera que cada t
-    milisegundos de ejecución de los threads, se detengan todos los
-    hilos y se muestre el número de primos encontrados hasta el momento.
-    Luego, se debe esperar a que el usuario presione ENTER para reanudar
-    la ejecución de los mismos. Utilice los mecanismos de sincronización
-    provistos por el lenguaje (wait y notify, notifyAll).
+#### Descripción del Proyecto SnakeRace
+SnakeRace es una versión concurrente del clásico juego Snake. Cada serpiente funciona como un hilo autónomo que toma decisiones aleatorias cada 500 ms. Se analizaron problemas de concurrencia y se realizaron ajustes para mejorar la estabilidad del programa.
 
-Tenga en cuenta:
+#### Problemas Identificados
+1. **Condiciones de carrera:** Acceso simultáneo a la GUI y estructuras compartidas como la lista de serpientes.
+2. **Uso inadecuado de colecciones:** Excepciones al modificar colecciones en ejecución.
+3. **Esperas activas innecesarias:** Reducción del consumo de CPU mediante sincronización eficiente.
 
--   La construcción synchronized se utiliza para obtener acceso exclusivo a un objeto.
+#### Soluciones Implementadas
+- **Sincronización de acceso a recursos compartidos** mediante `synchronized`.
+- **Uso de objetos de bloqueo** para evitar inconsistencias en la GUI.
+- **Creación de botones** para iniciar, pausar y reanudar el juego.
+- **Visualización de estadísticas** al pausar el juego (serpiente más larga y la primera en morir).
 
--   La instrucción A.wait() ejecutada en un hilo B pone en modo suspendido al hilo B (independientemente de qué objeto 'A' sea usado como 'lock'). Para reanudarlo, otro hilo activo puede reanudar a B haciendo 'notify()' al objeto usado como 'lock' (es decir, A).
+#### Funcionamiento Mejorado
+1. **Inicio:** Los hilos de las serpientes comienzan su ejecución al presionar "Start".
+3. **Movimiento:** Cada serpiente se mueve de manera autónoma dentro del tablero.
+5. **Pausa:** Al presionar "Pause", los hilos entran en `wait()` y se muestran estadísticas.
+6. **Reanudación:** Al presionar "Resume", los hilos continúan su ejecución con `notifyAll()`.
+7. **Finalización:** Cuando queda solo una serpiente viva, el juego finaliza automáticamente.
 
--   La instrucción notify(), despierta el primer hilo que hizo wait()
-    sobre el objeto.
+---
 
--   La instrucción notifyAll(), despierta todos los hilos que estan
-    esperando por el objeto (hicieron wait()sobre el objeto).
+## Conclusiones
+- Se comprendió la importancia de la **sincronización de hilos** para evitar condiciones de carrera.
+- Se aplicaron técnicas avanzadas de concurrencia para **optimizar el rendimiento y estabilidad** de programas multihilo.
+- Se reforzó la utilización de `wait()`, `notify()` y `notifyAll()` para la correcta gestión de procesos concurrentes.
+- Se mejoró la experiencia de usuario mediante la implementación de **controles de ejecución en la interfaz gráfica**.
 
+---
 
-### Parte II
-
-SnakeRace es una versión autónoma, multi-serpiente del famoso juego 'snake', basado en el proyecto de João Andrade -este ejercicio es un 'fork' del mismo-. En este juego:
-	
-- N serpientes funcionan de manera autónoma.
-- No existe el concepto de colisión entre las mismas. La única forma de que mueran es estrellándose contra un muro.
-- Hay ratones distribuídos a lo largo del juego. Como en el juego clásico, cada vez que una serpiente se come a un ratón, ésta crece.
-- Existen unos puntos (flechas rojas) que teletransportan a las serpientes.
-- Los rayos hacen que la serpiente aumente su velocidad.
-
-![](img/sshot.png)
-
-Ejercicio
-
-1. Analice el código para entender cómo hace uso de hilos para crear un comportamiento autónomo de las N serpientes.
-
-2. De acuerdo con lo anterior, y con la lógica del juego, identifique y escriba claramente (archivo RESPUESTAS.txt):
-    - Posibles condiciones de carrera.
-    - Uso inadecuado de colecciones, considerando su manejo concurrente (para esto, aumente la velocidad del juego y ejecútelo varias veces hasta que se genere un error).
-    - Uso innecesario de esperas activas.
-
-2. Identifique las regiones críticas asociadas a las condiciones de carrera, y haga algo para eliminarlas. Tenga en cuenta que se debe sincronizar estríctamente LO NECESARIO. En su documento de respuestas indique, la solución realizada para cada ítem del punto 2. Igualmente tenga en cuenta que en los siguientes puntos NO se deben agregar más posibles condiciones de carrera.
-
-3. Como se puede observar, el juego está incompleto. Haga los ajustes necesarios para que a través de botones en la interfaz se pueda Iniciar/Pausar/Reanudar el juego: iniciar el juego no se ha iniciado aún, suspender el juego si está en ejecución, reactivar el juego si está suspendido. Para esto tenga en cuenta:
-    * Al pausar (suspender) el juego, en alguna parte de la interfaz (agregue los componentes que desee) se debe mostrar:
-        - La serpiente viva más larga.
-        - La peor serpiente: la que primero murió.
-    
-        Recuerde que la suspensión de las serpientes NO es instantánea, y que se debe garantizar que se muestre información consistente.
-    
 
